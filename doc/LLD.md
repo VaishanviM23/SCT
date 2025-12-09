@@ -1109,5 +1109,5 @@ Content-Type: application/json
 ---
 
 **Document Version**: 1.0  
-**Last Updated**: 2024  
+**Last Updated**: 2024-12-09  
 **Author**: SCT Development Team

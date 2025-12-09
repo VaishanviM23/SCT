@@ -84,6 +84,6 @@ We will use **Angular 18** as the frontend framework for the Security Control To
 
 ---
 
-**Date**: 2024  
-**Author**: SCT Development Team  
-**Decision ID**: ADR-001
+**Document Version**: 1.0  
+**Last Updated**: 2024-12-09  
+**Author**: SCT Development Team

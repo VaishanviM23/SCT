@@ -269,6 +269,6 @@ loggerOptions: {
 
 ---
 
-**Date**: 2024  
-**Author**: SCT Development Team  
-**Decision ID**: ADR-002
+**Document Version**: 1.0  
+**Last Updated**: 2024-12-09  
+**Author**: SCT Development Team

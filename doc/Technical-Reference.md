@@ -89,24 +89,31 @@ This document provides technical reference information for developers, DevOps en
      production: false,
      msalConfigs: {
        authentication: {
-         clientId: 'YOUR_CLIENT_ID',
+         clientId: 'YOUR_CLIENT_ID',  // From Azure AD App Registration
          authority: 'https://login.microsoftonline.com/YOUR_TENANT_ID',
          redirectUri: 'http://localhost:4200/',
          postLogoutRedirectUri: 'http://localhost:4200/'
        },
        logAnalytics: {
-         workspaceId: 'YOUR_WORKSPACE_ID',
+         workspaceId: 'YOUR_WORKSPACE_ID',  // From Log Analytics Workspace
          url: 'https://api.loganalytics.io/v1/workspaces',
          scopes: ['https://api.loganalytics.io/.default']
        },
        openai: {
-         apiKey: 'YOUR_OPENAI_API_KEY',
+         apiKey: 'YOUR_OPENAI_API_KEY',  // NEVER commit actual keys - use environment variables or Azure Key Vault
          apiUrl: 'https://YOUR_ENDPOINT.cognitiveservices.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2025-01-01-preview',
          model: 'gpt-4o'
        }
      }
    };
    ```
+
+   **⚠️ SECURITY WARNING**: 
+   - **NEVER** commit actual API keys or secrets to source control
+   - Use environment variables for development: `process.env.AZURE_OPENAI_API_KEY`
+   - Use Azure Key Vault for production secrets
+   - Add `environment.ts` to `.gitignore` if it contains real values
+   - Use `environment.template.ts` for reference configuration
 
 2. **Azure AD App Registration**:
    - Navigate to Azure Portal → Azure Active Directory → App Registrations
@@ -966,6 +973,6 @@ appInsights.trackException({
 ---
 
 **Document Version**: 1.0  
-**Last Updated**: 2024  
+**Last Updated**: 2024-12-09  
 **Audience**: Developers, DevOps Engineers, Technical Staff  
 **Purpose**: Technical reference and implementation guide

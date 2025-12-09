@@ -330,6 +330,6 @@ describe('OpenAIService', () => {
 
 ---
 
-**Date**: 2024  
-**Author**: SCT Development Team  
-**Decision ID**: ADR-003
+**Document Version**: 1.0  
+**Last Updated**: 2024-12-09  
+**Author**: SCT Development Team
