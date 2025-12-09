@@ -7,9 +7,9 @@
 # ============================================================================
 # Web Framework
 # ============================================================================
-fastapi==0.104.1              # Modern web framework with async support
+fastapi==0.109.1              # Modern web framework with async support (patched ReDoS)
 uvicorn[standard]==0.24.0     # ASGI server
-python-multipart==0.0.6       # Form data parsing
+python-multipart==0.0.18      # Form data parsing (patched DoS vulnerabilities)
 websockets==12.0              # WebSocket support
 
 # ============================================================================
@@ -42,7 +42,7 @@ azure-cosmos==4.5.1           # Cosmos DB SDK
 # Authentication & Security
 # ============================================================================
 python-jose[cryptography]==3.3.0  # JWT token handling
-cryptography==41.0.7          # Cryptographic operations
+cryptography==42.0.4          # Cryptographic operations (patched NULL pointer and timing vulnerabilities)
 passlib[bcrypt]==1.7.4        # Password hashing (if needed)
 
 # ============================================================================
@@ -57,14 +57,14 @@ email-validator==2.1.0        # Email validation
 # ============================================================================
 httpx==0.25.2                 # Async HTTP client (also used for testing)
 requests==2.31.0              # Sync HTTP client (fallback)
-aiohttp==3.9.1                # Alternative async HTTP client
+aiohttp==3.9.4                # Alternative async HTTP client (patched DoS and directory traversal)
 
 # ============================================================================
 # Natural Language Processing
 # ============================================================================
 spacy==3.7.2                  # NLP library
-transformers==4.36.2          # Hugging Face transformers
-nltk==3.8.1                   # Natural Language Toolkit
+transformers==4.48.0          # Hugging Face transformers (patched deserialization vulnerabilities)
+nltk==3.9                     # Natural Language Toolkit (patched unsafe deserialization)
 langchain==0.0.350            # LLM orchestration framework
 langchain-openai==0.0.2       # LangChain Azure OpenAI integration
 
@@ -133,7 +133,7 @@ cachetools==5.3.2             # Caching utilities
 # Performance
 # ============================================================================
 ujson==5.9.0                  # Fast JSON serialization
-orjson==3.9.10                # Even faster JSON (alternative)
+orjson==3.9.15                # Even faster JSON (patched recursion vulnerability)
 
 # ============================================================================
 # Optional: Channel Adapters
@@ -148,4 +148,4 @@ orjson==3.9.10                # Even faster JSON (alternative)
 # ============================================================================
 # Production Server
 # ============================================================================
-gunicorn==21.2.0              # WSGI server (if needed)
+gunicorn==22.0.0              # WSGI server (patched HTTP smuggling vulnerabilities)

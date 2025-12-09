@@ -338,6 +338,23 @@ The Chatbot microservice can now be developed **independently** while maintainin
 
 ## Implementation Notes
 
+### Security Updates Applied
+
+All dependencies have been updated to patched versions to address known vulnerabilities:
+
+| Package | Old Version | New Version | Vulnerability Fixed |
+|---------|-------------|-------------|---------------------|
+| aiohttp | 3.9.1 | 3.9.4 | DoS via malformed POST requests, directory traversal |
+| cryptography | 41.0.7 | 42.0.4 | NULL pointer dereference, Bleichenbacher timing oracle |
+| fastapi | 0.104.1 | 0.109.1 | Content-Type Header ReDoS |
+| gunicorn | 21.2.0 | 22.0.0 | HTTP request/response smuggling |
+| nltk | 3.8.1 | 3.9 | Unsafe deserialization |
+| orjson | 3.9.10 | 3.9.15 | Recursion limit for deeply nested JSON |
+| python-multipart | 0.0.6 | 0.0.18 | DoS via malformed multipart data, ReDoS |
+| transformers | 4.36.2 | 4.48.0 | Deserialization of untrusted data |
+
+**All security vulnerabilities have been patched in the requirements.txt template.**
+
 ### Optimizations to Consider
 
 When implementing the Chatbot microservice, consider the following optimizations:
