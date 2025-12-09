@@ -1,0 +1,522 @@
+openapi: 3.1.0
+info:
+  title: SCT Chatbot Microservice API
+  description: |
+    AI-Powered Conversational Security Assistant for Security Control Tower.
+    
+    This API provides endpoints for natural language security queries, conversation management,
+    and real-time chat capabilities through both REST and WebSocket protocols.
+    
+    ## Authentication
+    All endpoints require JWT authentication via Bearer token in the Authorization header:
+    ```
+    Authorization: Bearer <jwt-token>
+    ```
+    
+    ## Rate Limiting
+    - 60 requests per minute per user
+    - 1000 requests per hour per user
+    
+    ## Base URLs
+    - Production: https://chatbot.sct.azure.com/api/v1
+    - Staging: https://chatbot-staging.sct.azure.com/api/v1
+    - Development: http://localhost:8000/api/v1
+  version: 1.0.0
+  contact:
+    name: SCT Development Team
+    email: sct-dev@example.com
+  license:
+    name: Internal Use Only
+
+servers:
+  - url: https://chatbot.sct.azure.com/api/v1
+    description: Production server
+  - url: https://chatbot-staging.sct.azure.com/api/v1
+    description: Staging server
+  - url: http://localhost:8000/api/v1
+    description: Development server
+
+tags:
+  - name: Chat
+    description: Chat message endpoints
+  - name: Conversations
+    description: Conversation management
+  - name: Health
+    description: Health check endpoints
+
+paths:
+  /chat/message:
+    post:
+      tags:
+        - Chat
+      summary: Send chat message
+      description: Send a chat message and receive an AI-generated response with security data
+      operationId: sendChatMessage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessageRequest'
+            examples:
+              simpleQuery:
+                summary: Simple security query
+                value:
+                  message: "Show me all high-severity incidents from the last 24 hours"
+                  userId: "user@example.com"
+              conversationContinuation:
+                summary: Continuing a conversation
+                value:
+                  message: "What about the critical ones?"
+                  conversationId: "conv-123-456-789"
+                  userId: "user@example.com"
+                  context:
+                    currentView: "dashboard"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageResponse'
+              examples:
+                withData:
+                  summary: Response with security data
+                  value:
+                    conversationId: "conv-123-456-789"
+                    messageId: "msg-987-654-321"
+                    response:
+                      text: "I found 15 high-severity incidents in the last 24 hours. Here's the breakdown:"
+                      type: "text_with_data"
+                    data:
+                      incidents:
+                        - incidentId: "INC-001"
+                          severity: "High"
+                          title: "Suspicious login attempt"
+                          timestamp: "2024-12-09T10:30:00Z"
+                      summary:
+                        total: 15
+                        critical: 2
+                        high: 13
+                    suggestions:
+                      - "Show details for incident INC-001"
+                      - "Filter by incident source"
+                      - "Show incidents by user"
+                    timestamp: "2024-12-09T12:45:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /chat/conversations/{userId}:
+    get:
+      tags:
+        - Conversations
+      summary: Get conversation history
+      description: Retrieve conversation history for a specific user
+      operationId: getConversationHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User identifier
+          example: "user@example.com"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          description: Number of conversations to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationHistoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /chat/conversations/{conversationId}/clear:
+    post:
+      tags:
+        - Conversations
+      summary: Clear conversation context
+      description: Clear the context of a specific conversation
+      operationId: clearConversation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Conversation identifier
+          example: "conv-123-456-789"
+      responses:
+        '200':
+          description: Conversation cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Conversation context cleared successfully"
+                  conversationId:
+                    type: string
+                    example: "conv-123-456-789"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check service health and dependency status
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                version: "1.0.0"
+                timestamp: "2024-12-09T12:45:00Z"
+                dependencies:
+                  azure_openai: "connected"
+                  microsoft_sentinel: "connected"
+                  redis: "connected"
+
+  /health/ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness check
+      description: Check if service is ready to accept requests
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ready"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Azure AD
+
+  schemas:
+    ChatMessageRequest:
+      type: object
+      required:
+        - message
+        - userId
+      properties:
+        message:
+          type: string
+          description: User's message/query
+          minLength: 1
+          maxLength: 2000
+          example: "Show me all high-severity incidents"
+        conversationId:
+          type: string
+          description: Optional conversation ID to continue existing conversation
+          example: "conv-123-456-789"
+        userId:
+          type: string
+          description: User identifier
+          example: "user@example.com"
+        context:
+          type: object
+          description: Additional context for the query
+          additionalProperties: true
+          example:
+            currentView: "dashboard"
+            filters: {}
+
+    ChatMessageResponse:
+      type: object
+      required:
+        - conversationId
+        - messageId
+        - response
+        - timestamp
+      properties:
+        conversationId:
+          type: string
+          description: Conversation identifier
+          example: "conv-123-456-789"
+        messageId:
+          type: string
+          description: Message identifier
+          example: "msg-987-654-321"
+        response:
+          type: object
+          required:
+            - text
+            - type
+          properties:
+            text:
+              type: string
+              description: AI-generated response text
+            type:
+              type: string
+              enum: [text, text_with_data, error]
+              description: Response type
+        data:
+          type: object
+          description: Structured data returned from queries
+          additionalProperties: true
+        suggestions:
+          type: array
+          description: Suggested follow-up queries
+          items:
+            type: string
+          example:
+            - "Show details for incident INC-001"
+            - "Filter by incident source"
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+
+    ConversationHistoryResponse:
+      type: object
+      required:
+        - conversations
+        - total
+        - limit
+        - offset
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+        total:
+          type: integer
+          description: Total number of conversations
+          example: 45
+        limit:
+          type: integer
+          description: Results per page
+          example: 10
+        offset:
+          type: integer
+          description: Pagination offset
+          example: 0
+
+    Conversation:
+      type: object
+      required:
+        - conversationId
+        - userId
+        - startedAt
+        - lastMessageAt
+        - messageCount
+      properties:
+        conversationId:
+          type: string
+          example: "conv-123-456-789"
+        userId:
+          type: string
+          example: "user@example.com"
+        startedAt:
+          type: string
+          format: date-time
+        lastMessageAt:
+          type: string
+          format: date-time
+        messageCount:
+          type: integer
+          example: 8
+        summary:
+          type: string
+          description: Conversation summary
+          example: "Discussion about high-severity incidents"
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      required:
+        - messageId
+        - role
+        - content
+        - timestamp
+      properties:
+        messageId:
+          type: string
+          example: "msg-001"
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Message sender role
+        content:
+          type: string
+          description: Message content
+        timestamp:
+          type: string
+          format: date-time
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy, degraded]
+          description: Overall health status
+        version:
+          type: string
+          description: Service version
+        timestamp:
+          type: string
+          format: date-time
+        dependencies:
+          type: object
+          description: Status of external dependencies
+          properties:
+            azure_openai:
+              type: string
+              enum: [connected, disconnected, error]
+            microsoft_sentinel:
+              type: string
+              enum: [connected, disconnected, error]
+            redis:
+              type: string
+              enum: [connected, disconnected, error]
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Error code
+              example: "INVALID_MESSAGE"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "Message cannot be empty"
+            details:
+              type: object
+              description: Additional error details
+              additionalProperties: true
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+              description: Request identifier for tracking
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "INVALID_MESSAGE"
+              message: "Message cannot be empty"
+              timestamp: "2024-12-09T12:45:00Z"
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "INVALID_TOKEN"
+              message: "JWT token is invalid or expired"
+              timestamp: "2024-12-09T12:45:00Z"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "CONVERSATION_NOT_FOUND"
+              message: "Conversation ID doesn't exist"
+              timestamp: "2024-12-09T12:45:00Z"
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "RATE_LIMIT_EXCEEDED"
+              message: "Too many requests. Please try again later."
+              timestamp: "2024-12-09T12:45:00Z"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "INTERNAL_SERVER_ERROR"
+              message: "An unexpected error occurred"
+              timestamp: "2024-12-09T12:45:00Z"

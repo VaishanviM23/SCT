@@ -109,7 +109,29 @@ Documents key architectural decisions with rationale:
   - Function calling implementation
   - Cost management strategies
 
+- **[ADR-004: Chatbot Microservice](./adr/ADR-004-Chatbot-Microservice.md)**
+  - Why separate microservice for chatbot functionality
+  - Technology stack selection (Python/FastAPI)
+  - Integration architecture and API design
+  - Multi-channel support strategy
+
 **Use this when**: Understanding why specific technologies were chosen, evaluating alternatives, or making similar decisions in other projects.
+
+---
+
+### 💬 [Chatbot Microservice Integration Guide](./Chatbot-Integration.md)
+**Audience**: Developers, Architects, DevOps Engineers
+
+Comprehensive guide for the separate Chatbot microservice:
+- Microservice architecture and design
+- API specifications and integration points
+- Authentication and authorization flow
+- Deployment architecture (AKS, Docker)
+- Configuration and environment setup
+- Development workflow and testing
+- Monitoring and observability
+
+**Use this when**: Setting up the Chatbot microservice, integrating with SCT, or planning multi-channel conversation features.
 
 ---
 
@@ -121,6 +143,7 @@ Documents key architectural decisions with rationale:
 3. Read [Technical Reference](./Technical-Reference.md) - Section "Development Environment Setup"
 4. Review [C4 Diagrams](./diagrams/C4-Diagrams.md) for visual understanding
 5. Check relevant ADRs for technology choices
+6. Review [Chatbot Integration Guide](./Chatbot-Integration.md) if working on conversational AI features
 
 ### For Security Analysts (Users)
 1. Read [Functional Documentation](./Functional-Documentation.md) - Section "User Roles and Personas"
@@ -131,14 +154,16 @@ Documents key architectural decisions with rationale:
 ### For Architects and Managers
 1. Read [HLD.md](./HLD.md) for system overview
 2. Review [C4 Diagrams](./diagrams/C4-Diagrams.md) for architecture
-3. Read ADRs for key decisions
+3. Read ADRs for key decisions, especially [ADR-004: Chatbot Microservice](./adr/ADR-004-Chatbot-Microservice.md)
 4. Review [Functional Documentation](./Functional-Documentation.md) for business value
+5. Review [Chatbot Integration Guide](./Chatbot-Integration.md) for microservice architecture
 
 ### For DevOps/Operations
 1. Read [Technical Reference](./Technical-Reference.md) - Deployment Guide
 2. Review [LLD.md](./LLD.md) - Configuration Management
 3. Check Troubleshooting section in Technical Reference
 4. Review monitoring and logging strategies
+5. Review [Chatbot Integration Guide](./Chatbot-Integration.md) - Deployment Architecture section
 
 ---
 
@@ -147,7 +172,8 @@ Documents key architectural decisions with rationale:
 ### SentriBot AI Assistant
 - **Functional**: [Functional Documentation](./Functional-Documentation.md#1-sentribot---ai-powered-security-assistant)
 - **Technical**: [LLD.md](./LLD.md#4-sentinelqueryservice)
-- **Architecture**: [ADR-003: Azure OpenAI](./adr/ADR-003-Azure-OpenAI.md)
+- **Architecture**: [ADR-003: Azure OpenAI](./adr/ADR-003-Azure-OpenAI.md), [ADR-004: Chatbot Microservice](./adr/ADR-004-Chatbot-Microservice.md)
+- **Integration**: [Chatbot Integration Guide](./Chatbot-Integration.md)
 - **Diagrams**: [Sequence Diagram](./diagrams/C4-Diagrams.md#sentribot-query-processing-flow)
 
 ### Authentication & Authorization
