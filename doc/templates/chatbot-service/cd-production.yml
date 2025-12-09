@@ -1,0 +1,303 @@
+name: CD - Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  PYTHON_VERSION: '3.11'
+  AZURE_RESOURCE_GROUP: 'rg-sct-production'
+  AKS_CLUSTER_NAME: 'aks-sct-prod'
+  ACR_NAME: 'acrsctprod'
+  IMAGE_NAME: 'sct-chatbot'
+
+jobs:
+  # ============================================================================
+  # Build & Push Docker Image
+  # ============================================================================
+  build-push:
+    name: Build & Push to ACR
+    runs-on: ubuntu-latest
+    environment: production
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Azure Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.ACR_NAME }}.azurecr.io
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+    
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          BUILD_DATE=${{ github.event.head_commit.timestamp }}
+          VCS_REF=${{ github.sha }}
+          VERSION=${{ steps.meta.outputs.version }}
+
+  # ============================================================================
+  # Deploy to Azure Kubernetes Service
+  # ============================================================================
+  deploy-aks:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+    needs: build-push
+    environment: production
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Set AKS Context
+      uses: azure/aks-set-context@v3
+      with:
+        resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+        cluster-name: ${{ env.AKS_CLUSTER_NAME }}
+    
+    - name: Create/Update Kubernetes Secrets
+      run: |
+        kubectl create secret generic chatbot-secrets \
+          --from-literal=azure-client-secret=${{ secrets.AZURE_CLIENT_SECRET }} \
+          --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }} \
+          --from-literal=openai-api-key=${{ secrets.OPENAI_API_KEY }} \
+          --from-literal=cosmos-db-key=${{ secrets.COSMOS_DB_KEY }} \
+          --dry-run=client -o yaml | kubectl apply -f -
+    
+    - name: Update Kubernetes ConfigMap
+      run: |
+        kubectl create configmap chatbot-config \
+          --from-literal=environment=production \
+          --from-literal=log-level=INFO \
+          --from-literal=app-version=${{ needs.build-push.outputs.image-tag }} \
+          --dry-run=client -o yaml | kubectl apply -f -
+    
+    - name: Deploy to AKS
+      uses: azure/k8s-deploy@v4
+      with:
+        namespace: sct-production
+        manifests: |
+          infrastructure/kubernetes/deployment.yaml
+          infrastructure/kubernetes/service.yaml
+          infrastructure/kubernetes/ingress.yaml
+          infrastructure/kubernetes/hpa.yaml
+        images: |
+          ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ needs.build-push.outputs.image-tag }}
+    
+    - name: Wait for Deployment Rollout
+      run: |
+        kubectl rollout status deployment/sct-chatbot -n sct-production --timeout=5m
+    
+    - name: Verify Deployment
+      run: |
+        kubectl get pods -n sct-production -l app=sct-chatbot
+        kubectl get service -n sct-production sct-chatbot
+
+  # ============================================================================
+  # Smoke Tests
+  # ============================================================================
+  smoke-tests:
+    name: Run Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy-aks
+    environment: production
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest requests
+    
+    - name: Run Health Check
+      run: |
+        response=$(curl -s -o /dev/null -w "%{http_code}" https://chatbot.sct.azure.com/api/v1/health)
+        if [ $response -ne 200 ]; then
+          echo "Health check failed with status code: $response"
+          exit 1
+        fi
+        echo "Health check passed!"
+    
+    - name: Run Smoke Tests
+      env:
+        API_BASE_URL: https://chatbot.sct.azure.com/api/v1
+        TEST_USER_TOKEN: ${{ secrets.TEST_USER_TOKEN }}
+      run: |
+        pytest tests/smoke -v --tb=short
+
+  # ============================================================================
+  # Database Migration (if needed)
+  # ============================================================================
+  database-migration:
+    name: Run Database Migration
+    runs-on: ubuntu-latest
+    needs: deploy-aks
+    environment: production
+    if: false  # Enable when database migrations are needed
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Run Migration Script
+      run: |
+        # Add migration commands here
+        echo "No migrations needed yet"
+
+  # ============================================================================
+  # Notification
+  # ============================================================================
+  notify:
+    name: Send Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [build-push, deploy-aks, smoke-tests]
+    if: always()
+    
+    steps:
+    - name: Notify Teams Channel
+      uses: aliencube/microsoft-teams-actions@v0.8.0
+      with:
+        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        title: 'Chatbot Microservice Deployment'
+        summary: |
+          Deployment to Production: ${{ needs.smoke-tests.result }}
+          Image Tag: ${{ needs.build-push.outputs.image-tag }}
+          Commit: ${{ github.sha }}
+        text: |
+          **Status**: ${{ needs.smoke-tests.result }}
+          **Environment**: Production
+          **Image**: ${{ needs.build-push.outputs.image-tag }}
+          **Deployed by**: ${{ github.actor }}
+          **Commit**: [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+        theme_color: ${{ needs.smoke-tests.result == 'success' && '00FF00' || 'FF0000' }}
+
+  # ============================================================================
+  # Rollback on Failure
+  # ============================================================================
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-aks, smoke-tests]
+    if: failure()
+    environment: production
+    
+    steps:
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Set AKS Context
+      uses: azure/aks-set-context@v3
+      with:
+        resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+        cluster-name: ${{ env.AKS_CLUSTER_NAME }}
+    
+    - name: Rollback to Previous Version
+      run: |
+        kubectl rollout undo deployment/sct-chatbot -n sct-production
+        kubectl rollout status deployment/sct-chatbot -n sct-production --timeout=5m
+    
+    - name: Notify Rollback
+      uses: aliencube/microsoft-teams-actions@v0.8.0
+      with:
+        webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        title: '⚠️ Chatbot Deployment Rolled Back'
+        summary: 'Deployment failed and was automatically rolled back'
+        text: |
+          **Status**: Rolled Back
+          **Reason**: Smoke tests failed
+          **Commit**: ${{ github.sha }}
+          **Action Required**: Review logs and investigate failure
+        theme_color: 'FFA500'
+
+  # ============================================================================
+  # Post-Deployment Tasks
+  # ============================================================================
+  post-deployment:
+    name: Post-Deployment Tasks
+    runs-on: ubuntu-latest
+    needs: [smoke-tests]
+    if: success()
+    environment: production
+    
+    steps:
+    - name: Update Application Insights
+      uses: azure/CLI@v1
+      with:
+        azcliversion: latest
+        inlineScript: |
+          # Tag the deployment in Application Insights
+          az monitor app-insights component update \
+            --app sct-chatbot-insights \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --tags "deployment=${{ github.sha }}" "deployed_by=${{ github.actor }}"
+    
+    - name: Create GitHub Release Tag
+      uses: actions/create-release@v1
+      if: github.ref == 'refs/heads/main'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ needs.build-push.outputs.image-tag }}
+        release_name: Release ${{ needs.build-push.outputs.image-tag }}
+        body: |
+          Automated deployment to production
+          Commit: ${{ github.sha }}
+          Image: ${{ needs.build-push.outputs.image-tag }}
+        draft: false
+        prerelease: false

@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # Chatbot Service
+  chatbot:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile
+    container_name: sct-chatbot
+    ports:
+      - "8000:8000"
+    environment:
+      # Azure AD Configuration
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+      
+      # Azure OpenAI Configuration
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION}
+      
+      # Microsoft Sentinel Configuration
+      AZURE_WORKSPACE_ID: ${AZURE_WORKSPACE_ID}
+      
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
+      REDIS_SSL: "false"
+      REDIS_DB: 0
+      
+      # Application Configuration
+      APP_NAME: sct-chatbot-service
+      APP_VERSION: 1.0.0
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      API_V1_PREFIX: /api/v1
+      CORS_ORIGINS: '["http://localhost:4200","http://localhost:8000"]'
+      
+      # Security Configuration
+      JWT_ALGORITHM: RS256
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_ISSUER: ${JWT_ISSUER}
+      
+      # Rate Limiting
+      RATE_LIMIT_PER_MINUTE: 60
+      RATE_LIMIT_PER_HOUR: 1000
+    depends_on:
+      - redis
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for conversation context storage
+  redis:
+    image: redis:7-alpine
+    container_name: sct-chatbot-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Optional: Redis Commander (UI for Redis)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: sct-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-changeme}
+    networks:
+      - chatbot-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    profiles:
+      - debug
+
+networks:
+  chatbot-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
