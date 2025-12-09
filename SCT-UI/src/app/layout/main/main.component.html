@@ -1,0 +1,83 @@
+<div class="sidebar" [class.toggled]="!sidebarVisible">
+    <a class="nav-link" routerLink="/overview" routerLinkActive="active">
+    <i class="bi bi-grid-1x2"></i>
+    @if (sidebarVisible) {
+      <span>Overview</span>
+    }
+  </a>
+  <a class="nav-link" routerLink="/threat-incident-report" routerLinkActive="active">
+    <i class="bi bi-exclamation-triangle"></i>
+    @if (sidebarVisible) {
+      <span>Threat & Incident Readiness</span>
+    }
+  </a>
+  <a class="nav-link" routerLink="/identity-access" routerLinkActive="active">
+    <i class="bi bi-person-badge"></i>
+    @if (sidebarVisible) {
+      <span>Identity & Access</span>
+    }
+  </a>
+  <a class="nav-link" routerLink="/asset-endpoint-security" routerLinkActive="active">
+    <i class="bi bi-laptop"></i>
+    @if (sidebarVisible) {
+      <span>Asset & Endpoint Security</span>
+    }
+  </a>
+  <a class="nav-link" routerLink="/cloud-workload-security" routerLinkActive="active">
+    <i class="bi bi-cloud-check"></i>
+    @if (sidebarVisible) {
+      <span>Cloud & Workload Security</span>
+    }
+  </a>
+  <a class="nav-link" routerLink="/compliance-governance" routerLinkActive="active">
+    <i class="bi bi-clipboard-check"></i>
+    @if (sidebarVisible) {
+      <span>Compliance & Governance</span>
+    }
+  </a>
+  <a class="nav-link" routerLink="/network-security" routerLinkActive="active">
+    <i class="bi bi-diagram-3"></i>
+    @if (sidebarVisible) {
+      <span>Network Security</span>
+    }
+  </a>
+  <a class="nav-link" routerLink="/resilience-recovery" routerLinkActive="active">
+    <i class="bi bi-arrow-clockwise"></i>
+    @if (sidebarVisible) {
+      <span>Resilience & Recovery</span>
+    }
+  </a>
+  <a class="nav-link" routerLink="/user-awareness" routerLinkActive="active">
+    <i class="bi bi-person-check"></i>
+    @if (sidebarVisible) {
+      <span>User Awareness & Behavior</span>
+    }
+  </a>
+
+  <!-- NEW: SentriBot Menu Item -->
+  <a class="nav-link" routerLink="/sentribot" routerLinkActive="active">
+    <i class="bi bi-shield-lock"></i>
+    @if (sidebarVisible) {
+      <span>SentriBot</span>
+    }
+  </a>
+
+  
+  <div class="logo-container">
+    @if(sidebarVisible){
+      <div class="company-logo-expanded">
+        <img src="assets/company-logo-expanded.png" alt="Company Logo" />
+      </div>
+    }
+    @else{
+      <div class="company-logo-collapsed">
+        <img src="assets/company-logo-collapsed.png" alt="Company Logo" />
+      </div>
+    }
+  </div>
+
+</div>
+
+<div class="content" [class.toggled]="!sidebarVisible">
+  <router-outlet></router-outlet>
+</div>

@@ -1,0 +1,223 @@
+<div class="overview-container">
+  <!-- Welcome Banner -->
+  <div class="welcome-banner">
+    <h1>Welcome to Security Control Tower</h1>
+    <p>The AI-Infused Security Control Tower is a unified command center built on top of a Sentinel-backed security data lake, providing a single view across your entire security data estate. It delivers real-time visibility, analytics, and AI-driven response across cloud, identity, and data domains — enabling proactive, intelligent, and automated defense at scale.</p>
+  </div>
+  
+  <div class="cards-row">
+    <!-- MOVED TO FIRST POSITION: AI Insights Card -->
+    <div class="ai-insights-card clickable" (click)="navigateTo('/sentribot')">
+      <div class="card-header">
+        <h3>
+          <i class="ai-icon">🤖</i>
+          AI Security Insights
+        </h3>
+        <div class="analysis-info">
+          <span class="confidence-badge">{{ aiInsights.confidenceScore }}% Confidence</span>
+          <span class="timestamp">Updated {{ aiInsights.analysisTimestamp | date: 'short' }}</span>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <div class="insights-summary">
+          <div class="summary-stats">
+            <div class="stat-item">
+              <div class="stat-icon critical">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ aiInsights.criticalAlerts }}</div>
+                <div class="stat-label">Critical Alerts</div>
+              </div>
+            </div>
+            
+            <div class="stat-item">
+              <div class="stat-icon insights">
+                <i class="bi bi-lightbulb-fill"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ aiInsights.totalInsights }}</div>
+                <div class="stat-label">Active Insights</div>
+              </div>
+            </div>
+
+            <div class="stat-item">
+              <div class="stat-icon trend" [class]="aiInsights.riskTrends.trend">
+                <i class="bi" 
+                   [class]="aiInsights.riskTrends.trend === 'decreasing' ? 'bi-arrow-down' : 'bi-arrow-up'"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ aiInsights.riskTrends.thisWeek }}</div>
+                <div class="stat-label">Risk Score</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="insights-list">
+          <h4>Top AI Recommendations</h4>
+          @for (insight of aiInsights.insights.slice(0, 3); track insight.id) {
+            <div class="insight-item" [class]="getPriorityClass(insight.priority)">
+              <div class="insight-header">
+                <div class="insight-priority">
+                  <i class="bi" [class]="'bi-' + getPriorityIcon(insight.priority)"></i>
+                  <span class="priority-label">{{ insight.priority | titlecase }}</span>
+                </div>
+                <div class="confidence-score">{{ insight.confidence }}%</div>
+              </div>
+              
+              <div class="insight-content">
+                <h5 class="insight-title">{{ insight.title }}</h5>
+                <p class="insight-description">{{ insight.description }}</p>
+                <div class="insight-category">
+                  <i class="bi bi-tag-fill"></i>
+                  <span>{{ insight.category }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="ai-actions">
+          <button class="ai-action-btn primary">
+            <i class="bi bi-robot"></i>
+            View All Insights
+          </button>
+          <button class="ai-action-btn secondary">
+            <i class="bi bi-chat-dots"></i>
+            Ask SentriBot
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOVED TO SECOND POSITION: Secure Score Card -->
+    <div class="secure-score-card clickable" (click)="navigateTo('/asset-endpoint-security')">
+      <div class="card-header">
+        <h3>Your secure score</h3>
+      </div>
+      
+      <div class="card-body">
+        <div class="score-main">
+          <h1 class="score-value">Secure Score: {{ secureScore.score }}%</h1>
+          <p class="score-points">{{ secureScore.pointsAchieved }}/{{ secureScore.totalPoints }} points achieved</p>
+        </div>
+        
+        <div class="score-chart">
+          <div class="chart-container">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="secureScore.score"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="breakdown-section">
+          <h4>Breakdown points by: Category</h4>
+          
+          <div class="category-list">
+            @for (category of secureScore.categories; track category.name) {
+              <div class="category-item">
+                <div class="category-header">
+                  <span class="category-name">{{ category.name }}</span>
+                  <span class="category-percentage">{{ category.percentage }}%</span>
+                </div>
+                <div class="category-progress">
+                  <div class="progress-bar">
+                    <div class="progress-achieved" [style.width.%]="category.percentage"></div>
+                    <div class="progress-opportunity" [style.width.%]="100 - category.percentage"></div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          
+          <div class="legend">
+            <div class="legend-item">
+              <span class="legend-color achieved"></span>
+              <span>Points achieved</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color opportunity"></span>
+              <span>Opportunity</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOVED TO THIRD POSITION: Connected Systems Card -->
+    <div class="connected-systems-card clickable" (click)="navigateTo('/connected-systems')">
+      <div class="card-header">
+        <h3>Connected Source Systems</h3>
+      </div>
+      
+      <div class="card-body">
+        <div class="systems-list">
+          @for (system of connectedSystems.systems; track system.name) {
+            <div class="system-item">
+              <div class="system-info">
+                <div class="system-details">
+                  <span class="system-name">{{ system.name }}</span>
+                  <div class="system-status" [class]="'status-' + system.syncStatus">
+                    <i class="status-icon" 
+                       [class]="system.syncStatus === 'success' ? 'bi bi-check-circle-fill' : 
+                                system.syncStatus === 'delayed' ? 'bi bi-exclamation-triangle-fill' : 
+                                'bi bi-x-circle-fill'"></i>
+                    <span class="sync-time">{{ system.lastSync }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="system-metrics">
+                <div class="data-volume">
+                  <span class="volume-text">{{ system.dataVolume }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="systems-summary">
+          <div class="summary-stats">
+            <div class="summary-item">
+              <span class="summary-value">{{ connectedSystems.connectedCount }}/{{ connectedSystems.totalSystems }}</span>
+              <span class="summary-label">Systems Connected</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-value">{{ totalDetections }}</span>
+              <span class="summary-label">Total Detections</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOVED TO FOURTH POSITION: Performance Metrics Card -->
+    <div class="performance-metrics-card clickable" (click)="navigateTo('/threat-incident-report')">
+      <div class="card-header">
+        <h3>Incidents SLA Metrics</h3>
+      </div>
+      
+      <div class="card-body">
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <div class="metric-label">Mean Time to Remediate (Days)</div>
+            <div class="metric-value">{{ performanceMetrics.meanTimeToRemediate.value }}</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Critical MTTR (7 days)</div>
+            <div class="metric-value">{{ performanceMetrics.criticalMTTR.value }}</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">High MTTR (30 days)</div>
+            <div class="metric-value">{{ performanceMetrics.highMTTR.value }}</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Incidents Past SLA</div>
+            <div class="metric-value">{{ performanceMetrics.incidentsPastSLA.value }}{{ performanceMetrics.incidentsPastSLA.unit }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

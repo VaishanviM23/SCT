@@ -1,0 +1,22 @@
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+      <button class="btn" type="button" (click)="toggleSidebar()" title="Toggle sidebar">
+        <i class="bi bi-list"></i>
+      </button>
+      <h1 class="app-title">Security Control Tower</h1>
+      <div class="user-profile">
+        @if (username) {
+          <div class="profile-card">
+            <img [src]="'https://ui-avatars.com/api/?name=' + username + '&background=random'" alt="Profile" class="profile-pic">
+            <div class="profile-info">
+              <div class="profile-name">{{ username }}</div>
+              <div class="profile-email">{{ email }}</div>
+            </div>
+            <button class="btn btn-logout" (click)="logout()" title="Logout">
+              <i class="bi bi-box-arrow-right"></i>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </nav>

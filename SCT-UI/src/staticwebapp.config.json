@@ -1,0 +1,22 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "*.{css,scss,js,png,jpg,jpeg,gif,svg,ico,woff,woff2,ttf,eot}"]
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  },
+  "globalHeaders": {
+    "content-security-policy": "default-src 'self' https://*.azurestaticapps.net https://*.microsoft.com https://*.microsoftonline.com https://graph.microsoft.com https://management.azure.com https://api.loganalytics.io https://*.openai.azure.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.powerbi.com https://app.powerbi.com; style-src 'self' 'unsafe-inline' https://*.powerbi.com https://fonts.googleapis.com; img-src 'self' data: https: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.azurestaticapps.net https://*.microsoft.com https://*.microsoftonline.com https://graph.microsoft.com https://management.azure.com https://api.loganalytics.io https://*.openai.azure.com https://*.cognitiveservices.azure.com https://*.powerbi.com https://app.powerbi.com https://api.powerbi.com https://*.analysis.windows.net; frame-src 'self' https://*.powerbi.com https://app.powerbi.com; child-src 'self' https://*.powerbi.com https://app.powerbi.com",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer-when-downgrade"
+  },
+  "mimeTypes": {
+    ".json": "application/json",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2"
+  }
+}

@@ -1,0 +1,155 @@
+<div class="sentribot-container">
+  <!-- Header Section -->
+  <div class="header">
+    <div class="header-content">
+      <div class="title-section">
+        <mat-icon class="sentribot-icon">smart_toy</mat-icon>
+        <h1>SentriBot</h1>
+        <span class="beta-badge">AI-Powered</span>
+      </div>
+      <p class="subtitle">
+        🤖 Ask me anything about your Microsoft Sentinel security data - CVE incidents, threats, alerts, user behavior, and more
+      </p>
+    </div>
+  </div>
+
+  <!-- Query Input Section -->
+  <div class="query-section">
+    <mat-card class="query-card">
+      <mat-card-content>
+        <div class="query-input-container">
+          <mat-form-field appearance="outline" class="query-input">
+            <mat-label>Ask SentriBot about your security data...</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="query"
+              (keydown)="onKeyDown($event)"
+              placeholder="e.g., Show me all CVEs affecting hr-portal, or Find high-risk users"
+              rows="3"
+              [disabled]="isLoading"
+            ></textarea>
+            <mat-icon matPrefix>psychology</mat-icon>
+            <mat-hint>Press Enter to ask, Shift+Enter for new line</mat-hint>
+          </mat-form-field>
+          
+          <div class="query-actions">
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="submitQuery()"
+              [disabled]="isLoading || !query.trim()"
+              class="submit-button"
+            >
+              <mat-icon>send</mat-icon>
+              <span>{{ isLoading ? 'Analyzing...' : 'Ask SentriBot' }}</span>
+            </button>
+            
+            <button
+              mat-stroked-button
+              (click)="clearResults()"
+              [disabled]="results.length === 0"
+              class="clear-button"
+            >
+              <mat-icon>delete_sweep</mat-icon>
+              <span>Clear History</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="error-message">
+          <mat-icon>error</mat-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Example Queries -->
+        <div class="example-queries">
+          <div class="example-header">
+            <mat-icon>lightbulb</mat-icon>
+            <span>Try these example queries:</span>
+          </div>
+          <div class="example-chips">
+            <mat-chip-set>
+              <mat-chip
+                *ngFor="let example of exampleQueries"
+                (click)="useExampleQuery(example)"
+                [disabled]="isLoading"
+                class="example-chip"
+              >
+                {{ example }}
+              </mat-chip>
+            </mat-chip-set>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="loading-section">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>🤖 SentriBot is analyzing your security data...</p>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-section" *ngIf="results.length > 0">
+    <h2 class="results-title">
+      <mat-icon>chat</mat-icon>
+      Conversation History
+    </h2>
+
+    <div class="results-list">
+      <mat-card
+        *ngFor="let result of results; let i = index"
+        class="result-card"
+        [class.error-card]="result.isError"
+      >
+        <mat-card-header>
+          <div mat-card-avatar class="result-avatar">
+            <mat-icon>{{ result.isError ? 'error' : 'smart_toy' }}</mat-icon>
+          </div>
+          <mat-card-title>
+            <div class="result-header">
+              <span class="query-text">{{ result.query }}</span>
+              <span class="timestamp">{{ result.timestamp | date: 'short' }}</span>
+            </div>
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <!-- KQL Query Display -->
+          <div *ngIf="result.kqlQuery" class="kql-section">
+            <div class="kql-header">
+              <mat-icon>code</mat-icon>
+              <span>Generated KQL Query:</span>
+            </div>
+            <pre class="kql-query">{{ result.kqlQuery }}</pre>
+          </div>
+
+          <!-- AI Analysis Result -->
+          <div class="result-content" [innerHTML]="result.result | markdown"></div>
+
+          <!-- Raw Data (if available) -->
+          <div *ngIf="result.data && result.data.length > 0" class="data-section">
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>table_chart</mat-icon>
+                  Raw Data ({{ result.data.length }} rows)
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <pre class="raw-data">{{ formatData(result.data) }}</pre>
+            </mat-expansion-panel>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="results.length === 0 && !isLoading" class="empty-state">
+    <mat-icon class="empty-icon">smart_toy</mat-icon>
+    <h3>Ready to analyze your Sentinel data!</h3>
+    <p>Ask SentriBot about CVE incidents, security threats, user risks, or any security-related questions.</p>
+  </div>
+</div>
