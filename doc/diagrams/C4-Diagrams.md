@@ -776,6 +776,100 @@ graph TB
 
 ---
 
+## Chatbot Microservice Integration Diagram
+
+This diagram shows how the separate Chatbot microservice integrates with the SCT system.
+
+```mermaid
+graph TB
+    User[Security Analyst]
+    
+    subgraph SCT_Frontend[SCT Frontend - Angular SPA]
+        Dashboard[Dashboard Views]
+        SentriBotUI[SentriBot UI]
+        ChatService[Chatbot Service<br/>TypeScript]
+    end
+    
+    subgraph Chatbot_Microservice[Chatbot Microservice - Python/FastAPI]
+        API[REST/WebSocket API]
+        ConvMgr[Conversation Manager]
+        IntentRec[Intent Recognizer]
+        ContextStore[Context Store<br/>Redis]
+        RespGen[Response Generator]
+    end
+    
+    subgraph Azure_Services[Azure Services]
+        AzureAD[Azure AD<br/>Authentication]
+        OpenAI[Azure OpenAI<br/>GPT-4o]
+        Sentinel[Microsoft Sentinel<br/>Security Data]
+        AppInsights[Application Insights<br/>Monitoring]
+    end
+    
+    User -->|Interacts| SentriBotUI
+    SentriBotUI -->|Calls| ChatService
+    ChatService -->|REST/WS<br/>JWT Token| API
+    
+    API -->|Validates Token| AzureAD
+    API -->|Manages| ConvMgr
+    ConvMgr -->|Stores/Retrieves| ContextStore
+    ConvMgr -->|Recognizes Intent| IntentRec
+    IntentRec -->|Processes NLP| OpenAI
+    ConvMgr -->|Queries Data| Sentinel
+    ConvMgr -->|Generates| RespGen
+    RespGen -->|Uses AI| OpenAI
+    
+    API -->|Logs Telemetry| AppInsights
+    ChatService -->|Receives Response| API
+    
+    style Chatbot_Microservice fill:#28a745,stroke:#1e7e34,color:#ffffff
+    style SCT_Frontend fill:#1168bd,stroke:#0b4884,color:#ffffff
+    style Azure_Services fill:#007acc,stroke:#005a9e,color:#ffffff
+```
+
+---
+
+## Chatbot Query Processing Sequence
+
+This sequence diagram shows the flow of a security query through the Chatbot microservice.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant SCT as SCT Frontend
+    participant Chatbot as Chatbot Service
+    participant Redis as Redis Cache
+    participant OpenAI as Azure OpenAI
+    participant Sentinel as MS Sentinel
+    
+    User->>SCT: Enter query: "Show high-severity incidents"
+    SCT->>Chatbot: POST /api/v1/chat/message<br/>{message, userId, conversationId}
+    
+    Note over Chatbot: Validate JWT Token
+    
+    Chatbot->>Redis: Get conversation context
+    Redis-->>Chatbot: Previous messages + context
+    
+    Chatbot->>OpenAI: Process natural language<br/>with context
+    OpenAI-->>Chatbot: Intent: query_incidents<br/>Entities: {severity: high}
+    
+    Note over Chatbot: Generate KQL query
+    
+    Chatbot->>Sentinel: Execute KQL query
+    Sentinel-->>Chatbot: Query results (incidents)
+    
+    Chatbot->>OpenAI: Generate response with data
+    OpenAI-->>Chatbot: Formatted response text
+    
+    Chatbot->>Redis: Update conversation context
+    
+    Chatbot-->>SCT: Response with data + suggestions
+    SCT-->>User: Display results
+    
+    Note over User,SCT: User can ask follow-up<br/>questions with context
+```
+
+---
+
 **Document Version**: 1.0  
 **Last Updated**: 2024  
 **Format**: Mermaid Diagrams  
