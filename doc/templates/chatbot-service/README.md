@@ -68,7 +68,7 @@ The SCT Chatbot Microservice is an independent conversational AI service designe
 
 1. **Clone the repository**:
 ```bash
-git clone https://github.com/VaishanviM23/sct-chatbot-service.git
+git clone https://github.com/YOUR_ORGANIZATION/sct-chatbot-service.git
 cd sct-chatbot-service
 ```
 

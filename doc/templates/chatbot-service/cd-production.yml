@@ -293,7 +293,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ needs.build-push.outputs.image-tag }}
+        tag_name: ${{ needs.build-push.outputs.image-tag }}
         release_name: Release ${{ needs.build-push.outputs.image-tag }}
         body: |
           Automated deployment to production

@@ -56,7 +56,7 @@ cd sct-chatbot-service
 
 3. **Add upstream remote**:
 ```bash
-git remote add upstream https://github.com/VaishanviM23/sct-chatbot-service.git
+git remote add upstream https://github.com/YOUR_ORGANIZATION/sct-chatbot-service.git
 ```
 
 4. **Create virtual environment**:

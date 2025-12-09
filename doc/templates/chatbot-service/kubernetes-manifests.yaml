@@ -321,6 +321,8 @@ spec:
 
 ---
 # ConfigMap
+# NOTE: This is a template. Replace placeholder values before deployment.
+# For production, use environment-specific ConfigMaps or Kustomize overlays.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -330,19 +332,23 @@ metadata:
     app: sct-chatbot
 data:
   # Azure AD Configuration
-  azure-tenant-id: "your-tenant-id"
-  azure-client-id: "your-client-id"
+  # REPLACE: Use actual Azure AD tenant and client IDs
+  azure-tenant-id: "REPLACE_WITH_TENANT_ID"
+  azure-client-id: "REPLACE_WITH_CLIENT_ID"
   
   # Azure OpenAI Configuration
-  openai-endpoint: "https://your-openai.openai.azure.com/"
+  # REPLACE: Use actual Azure OpenAI endpoint
+  openai-endpoint: "https://REPLACE_WITH_OPENAI_RESOURCE.openai.azure.com/"
   openai-deployment: "gpt-4o"
   openai-api-version: "2024-02-15-preview"
   
   # Microsoft Sentinel Configuration
-  workspace-id: "your-workspace-id"
+  # REPLACE: Use actual workspace ID
+  workspace-id: "REPLACE_WITH_WORKSPACE_ID"
   
   # Redis Configuration
-  redis-host: "your-redis.redis.cache.windows.net"
+  # REPLACE: Use actual Redis cache hostname
+  redis-host: "REPLACE_WITH_REDIS_HOST.redis.cache.windows.net"
   redis-port: "6380"
   
   # Application Configuration

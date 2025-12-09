@@ -55,7 +55,7 @@ email-validator==2.1.0        # Email validation
 # ============================================================================
 # HTTP Client
 # ============================================================================
-httpx==0.25.2                 # Async HTTP client
+httpx==0.25.2                 # Async HTTP client (also used for testing)
 requests==2.31.0              # Sync HTTP client (fallback)
 aiohttp==3.9.1                # Alternative async HTTP client
 
@@ -103,7 +103,7 @@ pytest==7.4.3                 # Testing framework
 pytest-asyncio==0.21.1        # Async test support
 pytest-cov==4.1.0             # Code coverage
 pytest-mock==3.12.0           # Mocking support
-httpx==0.25.2                 # Test client (also needed for app)
+# httpx already included above for HTTP client functionality
 faker==20.1.0                 # Test data generation
 freezegun==1.4.0              # Time mocking for tests
 
